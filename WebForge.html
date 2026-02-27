@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebForge AI — Website Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #05050a;
+  --bg2: #0c0c16;
+  --surface: #10101e;
+  --surface2: #181828;
+  --surface3: #20203a;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.1);
+  --c1: #6366f1;
+  --c2: #8b5cf6;
+  --c3: #06b6d4;
+  --c4: #10b981;
+  --c5: #f59e0b;
+  --c6: #ef4444;
+  --text: #f0f0ff;
+  --text2: #a0a0c0;
+  --text3: #606080;
+  --glow1: rgba(99,102,241,0.2);
+  --glow2: rgba(6,182,212,0.15);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 7px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* Custom cursor */
+.cursor {
+  position: fixed;
+  width: 12px; height: 12px;
+  background: var(--c1);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: exclusion;
+  transition: transform 0.15s, width 0.15s, height 0.15s;
+}
+.cursor-ring {
+  position: fixed;
+  width: 36px; height: 36px;
+  border: 1px solid rgba(99,102,241,0.5);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  transition: transform 0.08s;
+}
+.cursor.hover { transform: scale(2.5); }
+.cursor-ring.hover { transform: scale(1.5); border-color: var(--c1); }
+
+/* Noise texture overlay */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 1; opacity: 0.4;
+}
+
+/* Animated bg gradient */
+.bg-glow {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  overflow: hidden;
+}
+.bg-glow::before {
+  content: '';
+  position: absolute;
+  width: 800px; height: 800px;
+  background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 65%);
+  top: -200px; left: -200px;
+  animation: driftA 12s ease-in-out infinite alternate;
+}
+.bg-glow::after {
+  content: '';
+  position: absolute;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 65%);
+  bottom: -100px; right: -100px;
+  animation: driftB 10s ease-in-out infinite alternate;
+}
+@keyframes driftA { to { transform: translate(150px, 300px); } }
+@keyframes driftB { to { transform: translate(-200px, -150px); } }
+
+/* App layout */
+.app {
+  position: relative; z-index: 2;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+}
+
+/* ===== NAVBAR ===== */
+nav {
+  padding: 0 32px;
+  height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  background: rgba(5,5,10,0.6);
+  position: sticky; top: 0; z-index: 50;
+}
+
+.nav-brand {
+  display: flex; align-items: center; gap: 12px;
+}
+
+.brand-logo {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--c1), var(--c2));
+  border-radius: 10px;
+  display: grid; place-items: center;
+  font-size: 18px;
+  box-shadow: 0 0 20px rgba(99,102,241,0.4);
+  animation: logoGlow 3s ease-in-out infinite alternate;
+}
+@keyframes logoGlow {
+  to { box-shadow: 0 0 35px rgba(99,102,241,0.7); }
+}
+
+.brand-name {
+  font-size: 20px; font-weight: 800; letter-spacing: -0.5px;
+}
+.brand-name em { font-style: normal; color: var(--c3); }
+
+.nav-center {
+  display: flex; gap: 4px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 100px; padding: 4px;
+}
+
+.nav-tab {
+  padding: 6px 18px; border-radius: 100px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; border: none;
+  background: none; color: var(--text3);
+  font-family: 'Outfit', sans-serif;
+  transition: all 0.2s;
+}
+.nav-tab.active {
+  background: var(--surface3);
+  color: var(--text);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.nav-right {
+  display: flex; gap: 10px; align-items: center;
+}
+
+.api-pill {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 100px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text2);
+}
+.api-pill:hover { border-color: var(--c1); color: var(--text); }
+
+.status-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--text3);
+  transition: all 0.3s;
+}
+.status-dot.on {
+  background: var(--c4);
+  box-shadow: 0 0 10px var(--c4);
+  animation: dotPulse 2s infinite;
+}
+@keyframes dotPulse { 50% { opacity: 0.4; } }
+
+.usage-counter {
+  padding: 6px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 12px;
+  color: var(--text3);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ===== MAIN LAYOUT ===== */
+.main {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 0;
+  height: calc(100vh - 64px);
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 14px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface3) transparent;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 4px; }
+
+/* Prompt section */
+.section-label {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 2px;
+  color: var(--text3); margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-label::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+.prompt-wrapper {
+  position: relative;
+}
+
+textarea#prompt {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  padding-bottom: 44px;
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px; line-height: 1.6;
+  resize: none; height: 160px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+textarea#prompt:focus {
+  border-color: var(--c1);
+  box-shadow: 0 0 0 3px var(--glow1), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+textarea#prompt::placeholder { color: var(--text3); }
+
+.prompt-bottom {
+  position: absolute; bottom: 10px; left: 10px; right: 10px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.char-count {
+  font-size: 11px; color: var(--text3);
+  font-family: 'JetBrains Mono', monospace;
+}
+.prompt-clear {
+  font-size: 11px; color: var(--text3);
+  cursor: pointer; background: none; border: none;
+  font-family: 'Outfit', sans-serif; font-weight: 600;
+  padding: 3px 8px; border-radius: 4px;
+  transition: all 0.15s;
+}
+.prompt-clear:hover { color: var(--c6); background: rgba(239,68,68,0.1); }
+
+/* Quick prompts */
+.quick-prompts {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+}
+.qp-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 8px 10px;
+  font-size: 12px; font-weight: 600;
+  color: var(--text3); cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  text-align: left; transition: all 0.15s;
+  display: flex; align-items: center; gap: 6px;
+}
+.qp-btn:hover {
+  border-color: var(--c1);
+  color: var(--text);
+  background: rgba(99,102,241,0.06);
+}
+
+/* Category tags */
+.tag-grid {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.tag {
+  padding: 5px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 12px; font-weight: 600;
+  color: var(--text3); cursor: pointer;
+  transition: all 0.15s;
+}
+.tag:hover { border-color: var(--c3); color: var(--c3); background: rgba(6,182,212,0.05); }
+.tag.active { border-color: var(--c3); color: var(--c3); background: rgba(6,182,212,0.1); }
+
+/* Control rows */
+.ctrl-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.ctrl-group { display: flex; flex-direction: column; gap: 5px; }
+.ctrl-label {
+  font-size: 11px; font-weight: 700; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 1px;
+}
+
+select.ctrl-select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 9px 12px;
+  color: var(--text); font-family: 'Outfit', sans-serif;
+  font-size: 13px; font-weight: 500;
+  outline: none; cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%23606080' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color 0.2s;
+}
+select.ctrl-select:focus { border-color: var(--c1); }
+
+/* Toggle */
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+}
+.toggle-info { display: flex; flex-direction: column; gap: 2px; }
+.toggle-title { font-size: 13px; font-weight: 600; }
+.toggle-desc { font-size: 11px; color: var(--text3); }
+.toggle {
+  width: 40px; height: 22px;
+  background: var(--surface3);
+  border-radius: 100px; position: relative;
+  cursor: pointer; transition: background 0.2s;
+  border: none; outline: none;
+  flex-shrink: 0;
+}
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: white; top: 3px; left: 3px;
+  transition: transform 0.2s;
+}
+.toggle.on { background: var(--c1); }
+.toggle.on::after { transform: translateX(18px); }
+
+/* Color picker */
+.color-row {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.color-swatch {
+  width: 28px; height: 28px; border-radius: 50%;
+  cursor: pointer; border: 2px solid transparent;
+  transition: all 0.15s; position: relative;
+}
+.color-swatch.active { border-color: white; transform: scale(1.2); }
+.color-swatch::after {
+  content: '✓'; position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font-size: 12px; color: white; opacity: 0;
+}
+.color-swatch.active::after { opacity: 1; }
+
+/* Temp slider */
+.slider-row { display: flex; flex-direction: column; gap: 8px; }
+.slider-top { display: flex; justify-content: space-between; }
+.slider-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--c3);
+}
+input[type=range].slider {
+  width: 100%; height: 4px;
+  background: var(--surface3);
+  border-radius: 100px; outline: none;
+  appearance: none; cursor: pointer;
+}
+input[type=range].slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px; height: 16px;
+  background: var(--c1);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(99,102,241,0.5);
+}
+
+/* Generate button */
+.btn-gen {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, var(--c1) 0%, var(--c2) 100%);
+  border: none; border-radius: var(--radius-sm);
+  color: white; font-family: 'Outfit', sans-serif;
+  font-size: 15px; font-weight: 800;
+  cursor: pointer; position: relative; overflow: hidden;
+  letter-spacing: 0.3px;
+  box-shadow: 0 8px 32px rgba(99,102,241,0.4);
+  transition: all 0.2s;
+}
+.btn-gen::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+}
+.btn-gen::after {
+  content: '';
+  position: absolute;
+  width: 200%; height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
+  top: -50%; left: -50%;
+  opacity: 0; transition: opacity 0.3s;
+}
+.btn-gen:hover:not(:disabled)::after { opacity: 1; }
+.btn-gen:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 48px rgba(99,102,241,0.6);
+}
+.btn-gen:active:not(:disabled) { transform: translateY(0); }
+.btn-gen:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-gen .btn-inner {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  position: relative; z-index: 1;
+}
+
+/* Shortcut hint */
+.shortcut-hint {
+  text-align: center; font-size: 11px; color: var(--text3);
+}
+.kbd {
+  display: inline-block; padding: 2px 6px;
+  background: var(--surface3); border: 1px solid var(--border2);
+  border-radius: 4px; font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text2);
+}
+
+/* History section */
+.history-items {
+  display: flex; flex-direction: column; gap: 6px;
+  max-height: 180px; overflow-y: auto;
+}
+.history-items::-webkit-scrollbar { width: 3px; }
+.history-items::-webkit-scrollbar-thumb { background: var(--surface3); }
+.hist-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-xs); cursor: pointer;
+  transition: all 0.15s; overflow: hidden;
+}
+.hist-item:hover { border-color: var(--c1); }
+.hist-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--c1); flex-shrink: 0;
+}
+.hist-text {
+  font-size: 12px; color: var(--text2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  flex: 1;
+}
+.hist-del {
+  opacity: 0; font-size: 11px; color: var(--text3);
+  background: none; border: none; cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  transition: opacity 0.15s;
+}
+.hist-item:hover .hist-del { opacity: 1; }
+.hist-del:hover { color: var(--c6); }
+
+/* ===== PREVIEW PANE ===== */
+.preview {
+  display: flex; flex-direction: column;
+  background: var(--bg2);
+  overflow: hidden;
+}
+
+/* Preview toolbar */
+.preview-bar {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  flex-shrink: 0;
+}
+
+.preview-tabs {
+  display: flex; gap: 2px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs); padding: 3px;
+}
+.ptab {
+  padding: 6px 16px; border-radius: 6px;
+  font-size: 12px; font-weight: 700;
+  cursor: pointer; border: none; background: none;
+  color: var(--text3); font-family: 'Outfit', sans-serif;
+  transition: all 0.15s; display: flex; align-items: center; gap: 6px;
+}
+.ptab.active {
+  background: var(--surface3);
+  color: var(--text);
+}
+
+/* URL bar (fake) */
+.url-bar {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 7px 14px;
+  font-size: 12px; color: var(--text3);
+  font-family: 'JetBrains Mono', monospace;
+  display: flex; align-items: center; gap: 8px;
+  overflow: hidden;
+}
+.url-domain { color: var(--c4); }
+
+/* Device toggle */
+.device-btns {
+  display: flex; gap: 3px;
+}
+.dev-btn {
+  width: 32px; height: 32px;
+  background: none; border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  cursor: pointer; font-size: 14px;
+  display: grid; place-items: center;
+  transition: all 0.15s; color: var(--text3);
+}
+.dev-btn.active {
+  background: var(--surface2);
+  border-color: var(--c1);
+  color: var(--c1);
+}
+
+/* Action buttons */
+.action-btns {
+  display: flex; gap: 6px;
+}
+.act-btn {
+  padding: 7px 14px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  font-size: 12px; font-weight: 700;
+  cursor: pointer; color: var(--text2);
+  font-family: 'Outfit', sans-serif;
+  transition: all 0.15s; display: flex; align-items: center; gap: 5px;
+  white-space: nowrap;
+}
+.act-btn:hover { border-color: var(--c1); color: var(--c1); }
+.act-btn.primary {
+  background: rgba(99,102,241,0.1);
+  border-color: rgba(99,102,241,0.3);
+  color: var(--c1);
+}
+.act-btn.primary:hover { background: rgba(99,102,241,0.2); }
+
+/* Preview area */
+.preview-area {
+  flex: 1; position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: 
+    linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.iframe-wrapper {
+  position: relative;
+  width: 100%; height: 100%;
+  transition: width 0.3s, height 0.3s;
+}
+.iframe-wrapper.tablet {
+  width: 768px; height: 90%;
+  box-shadow: 0 20px 80px rgba(0,0,0,0.5);
+  border-radius: 12px; overflow: hidden;
+}
+.iframe-wrapper.mobile {
+  width: 375px; height: 85%;
+  box-shadow: 0 20px 80px rgba(0,0,0,0.5);
+  border-radius: 24px; overflow: hidden;
+  border: 8px solid var(--surface2);
+}
+
+#preview-iframe {
+  width: 100%; height: 100%;
+  border: none; background: white;
+  display: block;
+}
+
+/* Empty state */
+.empty-state {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 20px; color: var(--text3);
+}
+.empty-ring {
+  width: 120px; height: 120px;
+  border: 2px dashed var(--border2);
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 48px;
+  animation: emptyFloat 3s ease-in-out infinite;
+  position: relative;
+}
+.empty-ring::before, .empty-ring::after {
+  content: '';
+  position: absolute;
+  width: 140px; height: 140px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+}
+.empty-ring::after {
+  width: 160px; height: 160px;
+  animation: ringPulse 2s ease-in-out infinite;
+}
+@keyframes ringPulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.1; transform: scale(1.05); }
+}
+@keyframes emptyFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+.empty-title { font-size: 22px; font-weight: 700; color: var(--text2); }
+.empty-sub { font-size: 14px; max-width: 300px; text-align: center; line-height: 1.7; }
+.empty-hint {
+  display: flex; gap: 8px;
+}
+.empty-hint-item {
+  padding: 6px 14px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 100px; font-size: 12px; font-weight: 600;
+  color: var(--text3); cursor: pointer;
+  transition: all 0.15s;
+}
+.empty-hint-item:hover { border-color: var(--c1); color: var(--c1); }
+
+/* Code panel */
+#code-panel {
+  display: none;
+  width: 100%; height: 100%;
+  overflow: auto; background: #080810;
+}
+#code-panel pre {
+  padding: 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px; line-height: 1.8;
+  color: #abb2bf; white-space: pre-wrap; word-break: break-all;
+  counter-reset: line;
+}
+
+/* Diff panel */
+#diff-panel {
+  display: none;
+  width: 100%; height: 100%;
+  overflow: auto; padding: 20px;
+}
+#diff-panel .diff-title {
+  font-size: 14px; font-weight: 700; color: var(--text2);
+  margin-bottom: 16px;
+}
+
+/* Stream overlay */
+.stream-overlay {
+  position: absolute; inset: 0;
+  background: rgba(5,5,10,0.85);
+  backdrop-filter: blur(4px);
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 24px; z-index: 20;
+}
+.stream-overlay.show { display: flex; }
+.stream-ring {
+  width: 80px; height: 80px; position: relative;
+}
+.stream-ring svg {
+  animation: rotateSvg 2s linear infinite;
+  width: 80px; height: 80px;
+}
+@keyframes rotateSvg { to { transform: rotate(360deg); } }
+.stream-ring circle {
+  fill: none; stroke-width: 3;
+  stroke-linecap: round;
+}
+.stream-ring .track { stroke: var(--surface3); }
+.stream-ring .progress {
+  stroke: url(#grad);
+  stroke-dasharray: 200;
+  animation: dash 1.5s ease-in-out infinite;
+}
+@keyframes dash {
+  0% { stroke-dashoffset: 200; }
+  50% { stroke-dashoffset: 50; }
+  100% { stroke-dashoffset: 200; }
+}
+.stream-info {
+  text-align: center;
+}
+.stream-title {
+  font-size: 18px; font-weight: 700;
+  background: linear-gradient(90deg, var(--c1), var(--c3));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.stream-sub {
+  font-size: 13px; color: var(--text3); margin-top: 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.stream-bar {
+  width: 280px; height: 3px;
+  background: var(--surface3); border-radius: 100px;
+  overflow: hidden;
+}
+.stream-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--c1), var(--c3));
+  border-radius: 100px;
+  transition: width 0.3s;
+  animation: shimmer 1.5s ease-in-out infinite;
+  background-size: 200% 100%;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.stream-cancel {
+  padding: 8px 20px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: var(--radius-xs);
+  font-size: 12px; font-weight: 700; color: var(--text2);
+  cursor: pointer; font-family: 'Outfit', sans-serif;
+  transition: all 0.15s;
+}
+.stream-cancel:hover { border-color: var(--c6); color: var(--c6); }
+
+/* ===== MODAL ===== */
+.modal-bg {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(12px);
+  z-index: 100; display: flex;
+  align-items: center; justify-content: center;
+  animation: fadeIn 0.2s;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-bg.hidden { display: none; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 20px; padding: 36px;
+  width: min(90vw, 520px);
+  box-shadow: 0 40px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(99,102,241,0.1);
+  animation: modalUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes modalUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-icon {
+  width: 56px; height: 56px;
+  background: linear-gradient(135deg, var(--c1), var(--c2));
+  border-radius: 16px; display: grid; place-items: center;
+  font-size: 26px; margin-bottom: 20px;
+  box-shadow: 0 8px 24px rgba(99,102,241,0.4);
+}
+.modal h2 {
+  font-size: 22px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.3px;
+}
+.modal p { color: var(--text2); font-size: 14px; line-height: 1.7; margin-bottom: 24px; }
+
+.input-wrapper {
+  position: relative; margin-bottom: 8px;
+}
+.modal input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 13px 46px 13px 16px;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.modal input:focus {
+  border-color: var(--c1);
+  box-shadow: 0 0 0 3px var(--glow1);
+}
+.input-eye {
+  position: absolute; right: 14px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  font-size: 16px; color: var(--text3);
+  transition: color 0.15s;
+}
+.input-eye:hover { color: var(--text2); }
+
+.modal-note {
+  font-size: 12px; color: var(--text3);
+  display: flex; align-items: center; gap: 6px; margin-bottom: 20px;
+}
+
+.modal-actions {
+  display: flex; gap: 10px;
+}
+.modal-btn {
+  flex: 1; padding: 12px;
+  border-radius: var(--radius-xs);
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer; border: none;
+  transition: all 0.2s;
+}
+.modal-btn.primary {
+  background: linear-gradient(135deg, var(--c1), var(--c2));
+  color: white;
+  box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+}
+.modal-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(99,102,241,0.5); }
+.modal-btn.secondary {
+  background: var(--surface2); color: var(--text2);
+  border: 1px solid var(--border);
+}
+.modal-btn.secondary:hover { border-color: var(--border2); color: var(--text); }
+
+/* ===== TOAST ===== */
+.toast-container {
+  position: fixed; bottom: 24px; right: 24px;
+  display: flex; flex-direction: column; gap: 10px;
+  z-index: 200;
+}
+.toast {
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  transform: translateX(120%);
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  max-width: 320px;
+}
+.toast.show { transform: translateX(0); }
+.toast.success { border-color: rgba(16,185,129,0.3); }
+.toast.error { border-color: rgba(239,68,68,0.3); }
+.toast.info { border-color: rgba(99,102,241,0.3); }
+.toast-icon { font-size: 16px; flex-shrink: 0; }
+.toast-msg { flex: 1; }
+.toast-close {
+  background: none; border: none; cursor: pointer;
+  color: var(--text3); font-size: 14px;
+  transition: color 0.15s; padding: 2px;
+}
+.toast-close:hover { color: var(--text); }
+
+/* Progress bar */
+.progress-bar {
+  position: fixed; top: 64px; left: 0; right: 0;
+  height: 2px; z-index: 60;
+  background: transparent;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--c1), var(--c3), var(--c2));
+  width: 0; transition: width 0.3s;
+  display: none;
+}
+
+/* Spinner */
+.spin {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Stats bar */
+.stats-bar {
+  padding: 8px 20px;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 20px; align-items: center;
+  background: var(--surface);
+  font-size: 11px; color: var(--text3);
+  font-family: 'JetBrains Mono', monospace;
+}
+.stat-item { display: flex; align-items: center; gap: 6px; }
+.stat-dot { width: 5px; height: 5px; border-radius: 50%; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .main { grid-template-columns: 1fr; }
+  .sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 50vh; }
+  .nav-center { display: none; }
+  .preview { height: 60vh; }
+}
+</style>
+</head>
+<body>
+
+<!-- Custom cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<!-- BG -->
+<div class="bg-glow"></div>
+
+<!-- SVG defs for gradient -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- API Modal -->
+<div class="modal-bg hidden" id="modal-bg">
+  <div class="modal">
+    <div class="modal-icon">🔑</div>
+    <h2>OpenAI API Key</h2>
+    <p>Masukkan API key OpenAI kamu untuk mulai generate website secara real-time. Key hanya disimpan di browser lokalmu.</p>
+    <div class="input-wrapper">
+      <input type="password" id="api-input" placeholder="sk-proj-..." autocomplete="off"/>
+      <button class="input-eye" onclick="toggleEye()" id="eye-btn">👁️</button>
+    </div>
+    <div class="modal-note">
+      🔒 Tersimpan lokal di browsermu saja — tidak dikirim ke server manapun
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closeModal()">Batal</button>
+      <button class="modal-btn primary" onclick="saveKey()">Simpan & Mulai ✨</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Progress bar -->
+<div class="progress-bar">
+  <div class="progress-fill" id="progress-fill"></div>
+</div>
+
+<!-- App -->
+<div class="app">
+
+  <!-- Navbar -->
+  <nav>
+    <div class="nav-brand">
+      <div class="brand-logo">✦</div>
+      <div class="brand-name">Web<em>Forge</em> <span style="font-size:12px;color:var(--text3);font-weight:500">AI</span></div>
+    </div>
+    <div class="nav-center">
+      <button class="nav-tab active" onclick="switchView('editor')">Editor</button>
+      <button class="nav-tab" onclick="switchView('history')">Riwayat</button>
+      <button class="nav-tab" onclick="switchView('templates')">Template</button>
+    </div>
+    <div class="nav-right">
+      <div class="usage-counter" id="usage-counter">0 gen</div>
+      <div class="api-pill" onclick="openModal()" id="api-pill">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="api-pill-text">Tambah API Key</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <div class="main">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+
+      <!-- Prompt -->
+      <div>
+        <div class="section-label">Deskripsi Website</div>
+        <div class="prompt-wrapper">
+          <textarea id="prompt" placeholder="Contoh: Buat landing page keren untuk startup AI bernama 'NeuralPay' dengan hero section, 3 fitur utama, testimonial, pricing table, dan footer modern. Gunakan warna ungu & cyan dengan dark theme dan animasi smooth..."></textarea>
+          <div class="prompt-bottom">
+            <span class="char-count" id="char-count">0 / 1000</span>
+            <button class="prompt-clear" onclick="clearPrompt()">Hapus</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick prompts -->
+      <div>
+        <div class="section-label">Prompt Cepat</div>
+        <div class="quick-prompts">
+          <button class="qp-btn" onclick="setQuick('startup')">🚀 Startup Landing</button>
+          <button class="qp-btn" onclick="setQuick('portfolio')">💼 Portfolio Dev</button>
+          <button class="qp-btn" onclick="setQuick('saas')">☁️ SaaS Dashboard</button>
+          <button class="qp-btn" onclick="setQuick('ecommerce')">🛍️ E-commerce</button>
+          <button class="qp-btn" onclick="setQuick('restaurant')">🍽️ Restaurant</button>
+          <button class="qp-btn" onclick="setQuick('blog')">✍️ Blog Modern</button>
+        </div>
+      </div>
+
+      <!-- Tags -->
+      <div>
+        <div class="section-label">Tambah Elemen</div>
+        <div class="tag-grid" id="tag-grid">
+          <span class="tag" onclick="toggleTag(this,'hero section')">Hero</span>
+          <span class="tag" onclick="toggleTag(this,'navbar')">Navbar</span>
+          <span class="tag" onclick="toggleTag(this,'pricing table')">Pricing</span>
+          <span class="tag" onclick="toggleTag(this,'FAQ section')">FAQ</span>
+          <span class="tag" onclick="toggleTag(this,'testimonials')">Testimoni</span>
+          <span class="tag" onclick="toggleTag(this,'contact form')">Kontak</span>
+          <span class="tag" onclick="toggleTag(this,'footer')">Footer</span>
+          <span class="tag" onclick="toggleTag(this,'newsletter')">Newsletter</span>
+          <span class="tag" onclick="toggleTag(this,'gallery')">Galeri</span>
+          <span class="tag" onclick="toggleTag(this,'countdown timer')">Countdown</span>
+        </div>
+      </div>
+
+      <!-- Model & Style -->
+      <div>
+        <div class="section-label">Model & Gaya</div>
+        <div class="ctrl-row">
+          <div class="ctrl-group">
+            <div class="ctrl-label">Model AI</div>
+            <select class="ctrl-select" id="model-sel">
+              <option value="gpt-4o">GPT-4o ⚡</option>
+              <option value="gpt-4o-mini">GPT-4o Mini</option>
+              <option value="gpt-4-turbo">GPT-4 Turbo</option>
+            </select>
+          </div>
+          <div class="ctrl-group">
+            <div class="ctrl-label">Gaya Desain</div>
+            <select class="ctrl-select" id="style-sel">
+              <option value="modern">Modern Clean</option>
+              <option value="dark">Dark Techy</option>
+              <option value="glass">Glassmorphism</option>
+              <option value="bold">Bold Colorful</option>
+              <option value="minimal">Ultra Minimal</option>
+              <option value="retro">Retro Futuristic</option>
+              <option value="luxury">Luxury Premium</option>
+              <option value="playful">Playful Fun</option>
+            </select>
+          </div>
+        </div>
+        <div class="ctrl-row" style="margin-top:10px">
+          <div class="ctrl-group">
+            <div class="ctrl-label">Bahasa Konten</div>
+            <select class="ctrl-select" id="lang-sel">
+              <option value="indonesian">Indonesia 🇮🇩</option>
+              <option value="english">English 🇺🇸</option>
+            </select>
+          </div>
+          <div class="ctrl-group">
+            <div class="ctrl-label">Kelengkapan</div>
+            <select class="ctrl-select" id="len-sel">
+              <option value="full">Lengkap (Full)</option>
+              <option value="medium">Sedang</option>
+              <option value="quick">Cepat</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Color scheme -->
+      <div>
+        <div class="section-label">Palet Warna</div>
+        <div class="color-row" id="color-row">
+          <div class="color-swatch active" style="background:#6366f1" data-color="indigo-purple" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#06b6d4" data-color="cyan-blue" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#10b981" data-color="emerald-green" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#f59e0b" data-color="amber-orange" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#ef4444" data-color="red-coral" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#ec4899" data-color="pink-rose" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#8b5cf6" data-color="violet-purple" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:linear-gradient(135deg,#6366f1,#ec4899)" data-color="gradient mix" onclick="selectColor(this)"></div>
+        </div>
+      </div>
+
+      <!-- Temperature -->
+      <div>
+        <div class="section-label">Kreativitas AI</div>
+        <div class="slider-row">
+          <div class="slider-top">
+            <span style="font-size:12px;color:var(--text3);">Konservatif</span>
+            <span class="slider-val" id="temp-val">0.7</span>
+            <span style="font-size:12px;color:var(--text3);">Kreatif</span>
+          </div>
+          <input type="range" class="slider" id="temp-slider" min="0.1" max="1.5" step="0.1" value="0.7" oninput="updateTemp(this.value)">
+        </div>
+      </div>
+
+      <!-- Toggles -->
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="section-label">Opsi Tambahan</div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-title">🎬 Animasi CSS</div>
+            <div class="toggle-desc">Tambahkan animasi & transisi smooth</div>
+          </div>
+          <button class="toggle on" id="tog-anim" onclick="toggleOpt('tog-anim')"></button>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-title">📱 Responsive</div>
+            <div class="toggle-desc">Otomatis mobile-friendly</div>
+          </div>
+          <button class="toggle on" id="tog-resp" onclick="toggleOpt('tog-resp')"></button>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-title">⚡ JavaScript</div>
+            <div class="toggle-desc">Tambahkan interaktivitas JS</div>
+          </div>
+          <button class="toggle on" id="tog-js" onclick="toggleOpt('tog-js')"></button>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-title">🖼️ Placeholder Images</div>
+            <div class="toggle-desc">Gunakan gambar placeholder</div>
+          </div>
+          <button class="toggle on" id="tog-img" onclick="toggleOpt('tog-img')"></button>
+        </div>
+      </div>
+
+      <!-- Generate -->
+      <button class="btn-gen" id="gen-btn" onclick="generate()">
+        <div class="btn-inner">
+          <span id="gen-icon">✦</span>
+          <span id="gen-text">Generate Website</span>
+        </div>
+      </button>
+      <div class="shortcut-hint">Tekan <kbd class="kbd">Ctrl</kbd>+<kbd class="kbd">Enter</kbd> untuk generate</div>
+
+      <!-- History -->
+      <div id="hist-section" style="display:none">
+        <div class="section-label" style="justify-content:space-between;">
+          Riwayat
+          <button style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text3);font-family:'Outfit',sans-serif;font-weight:700" onclick="clearHistory()">Hapus Semua</button>
+        </div>
+        <div class="history-items" id="hist-list"></div>
+      </div>
+
+    </div>
+
+    <!-- Preview -->
+    <div class="preview">
+      <!-- Preview bar -->
+      <div class="preview-bar">
+        <div class="preview-tabs">
+          <button class="ptab active" id="ptab-preview" onclick="switchTab('preview')">🖥️ Preview</button>
+          <button class="ptab" id="ptab-code" onclick="switchTab('code')">📄 HTML</button>
+          <button class="ptab" id="ptab-diff" onclick="switchTab('diff')">📊 Stats</button>
+        </div>
+
+        <div class="url-bar" id="url-bar">
+          <span>🔒</span>
+          <span class="url-domain" id="url-domain">webforge.ai</span>
+          <span style="color:var(--text3)">/preview</span>
+        </div>
+
+        <div class="device-btns">
+          <button class="dev-btn active" onclick="setDevice('desktop')" title="Desktop">🖥️</button>
+          <button class="dev-btn" onclick="setDevice('tablet')" title="Tablet">📱</button>
+          <button class="dev-btn" onclick="setDevice('mobile')" title="Mobile">📲</button>
+        </div>
+
+        <div class="action-btns">
+          <button class="act-btn" onclick="refreshPreview()" title="Refresh">🔄</button>
+          <button class="act-btn" onclick="openFull()" title="Buka di tab baru">↗️</button>
+          <button class="act-btn" onclick="copyCode()">📋 Copy</button>
+          <button class="act-btn primary" onclick="downloadCode()">⬇️ Download</button>
+        </div>
+      </div>
+
+      <!-- Preview area -->
+      <div class="preview-area" id="preview-area">
+        <!-- Empty state -->
+        <div class="empty-state" id="empty-state">
+          <div class="empty-ring">🌐</div>
+          <div class="empty-title">Siap Generate!</div>
+          <div class="empty-sub">Tulis deskripsi website kamu di sebelah kiri, lalu klik Generate</div>
+          <div class="empty-hint">
+            <div class="empty-hint-item" onclick="setQuick('startup')">🚀 Startup</div>
+            <div class="empty-hint-item" onclick="setQuick('portfolio')">💼 Portfolio</div>
+            <div class="empty-hint-item" onclick="setQuick('saas')">☁️ SaaS</div>
+          </div>
+        </div>
+
+        <!-- Iframe wrapper -->
+        <div class="iframe-wrapper" id="iframe-wrapper" style="display:none">
+          <iframe id="preview-iframe"></iframe>
+        </div>
+
+        <!-- Code panel -->
+        <div id="code-panel">
+          <pre id="code-pre"></pre>
+        </div>
+
+        <!-- Diff/Stats panel -->
+        <div id="diff-panel">
+          <div class="diff-title">📊 Statistik Website</div>
+          <div id="stats-content"></div>
+        </div>
+
+        <!-- Stream overlay -->
+        <div class="stream-overlay" id="stream-overlay">
+          <div class="stream-ring">
+            <svg viewBox="0 0 80 80">
+              <defs>
+                <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#6366f1"/>
+                  <stop offset="100%" stop-color="#06b6d4"/>
+                </linearGradient>
+              </defs>
+              <circle class="track" cx="40" cy="40" r="35"/>
+              <circle class="progress" cx="40" cy="40" r="35" stroke="url(#sg)"/>
+            </svg>
+          </div>
+          <div class="stream-info">
+            <div class="stream-title" id="stream-title">Generating website...</div>
+            <div class="stream-sub" id="stream-sub">Menghubungi OpenAI API</div>
+          </div>
+          <div class="stream-bar">
+            <div class="stream-fill" id="stream-fill" style="width:0%"></div>
+          </div>
+          <button class="stream-cancel" onclick="cancelGenerate()">✕ Batalkan</button>
+        </div>
+      </div>
+
+      <!-- Stats bar -->
+      <div class="stats-bar" id="stats-bar">
+        <div class="stat-item">
+          <div class="stat-dot" style="background:var(--c4)"></div>
+          <span id="stat-tokens">0 tokens</span>
+        </div>
+        <div class="stat-item">
+          <div class="stat-dot" style="background:var(--c3)"></div>
+          <span id="stat-chars">0 chars</span>
+        </div>
+        <div class="stat-item">
+          <div class="stat-dot" style="background:var(--c5)"></div>
+          <span id="stat-lines">0 lines</span>
+        </div>
+        <div class="stat-item">
+          <div class="stat-dot" style="background:var(--c2)"></div>
+          <span id="stat-time">0.0s</span>
+        </div>
+        <div style="flex:1"></div>
+        <span id="stat-model" style="color:var(--text3)">—</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+let API_KEY = localStorage.getItem('wfai_key') || '';
+let generatedCode = '';
+let isGenerating = false;
+let abortController = null;
+let history = JSON.parse(localStorage.getItem('wfai_history') || '[]');
+let usageCount = parseInt(localStorage.getItem('wfai_usage') || '0');
+let selectedColor = 'indigo-purple';
+let startTime = 0;
+let timerInterval = null;
+
+const QUICK_PROMPTS = {
+  startup: 'Buat landing page modern untuk startup AI bernama "NeuralFlow" dengan dark theme ungu-cyan. Sertakan: hero section dengan headline besar dan animasi gradient, 3 fitur utama dengan icon, section "Cara Kerja" dengan steps, testimonial dari 3 pengguna, pricing 3 tier, dan footer lengkap. Gunakan animasi scroll reveal dan micro-interactions.',
+  portfolio: 'Buat portfolio website untuk frontend developer bernama "Rizky Aditya". Gunakan dark elegant theme dengan warna hitam & emas. Sertakan: hero dengan animasi typing, about me, skills dengan progress bar animasi, portfolio grid 6 project, pengalaman kerja timeline, dan contact form. Desain premium dan profesional.',
+  saas: 'Buat landing page SaaS untuk tool manajemen tim bernama "TeamSync". Theme: glassmorphism dengan background biru gelap. Sertakan: navbar sticky, hero dengan dashboard mockup, 4 fitur dengan ilustrasi, social proof (logo perusahaan klien), pricing table 3 plan, FAQ accordion, dan CTA section. Modern dan clean.',
+  ecommerce: 'Buat halaman toko online modern untuk brand fashion premium "LUMINA". Warna putih & hitam dengan aksen emas. Sertakan: navbar dengan cart icon, hero banner full-screen, kategori produk, grid produk 8 items dengan hover effect, banner promo, dan newsletter subscription. Minimal luxury aesthetic.',
+  restaurant: 'Buat website restoran fine dining "Sapore" yang mewah dan elegan. Warna merah tua, krem, dan hitam. Sertakan: hero fullscreen dengan foto makanan, menu section dengan kategori, about section dengan chef profile, galeri foto masakan, reservasi form, lokasi & jam buka, dan footer artistik.',
+  blog: 'Buat blog website modern untuk konten teknologi bernama "TechByte". Theme: putih bersih dengan aksen biru. Sertakan: header dengan search bar, featured post hero, grid artikel terbaru 6 posts, sidebar dengan kategori & tags popular, newsletter sign-up, dan footer. Typography yang sangat bagus dan readable.'
+};
+
+// ===== INIT =====
+window.onload = () => {
+  updateApiStatus();
+  updateUsageCounter();
+  renderHistory();
+
+  // Prompt char count
+  document.getElementById('prompt').addEventListener('input', function() {
+    document.getElementById('char-count').textContent = `${this.value.length} / 1000`;
+  });
+
+  // Timer update
+  setInterval(updateTimer, 100);
+};
+
+// ===== CURSOR =====
+const cursor = document.getElementById('cursor');
+const cursorRing = document.getElementById('cursor-ring');
+
+document.addEventListener('mousemove', e => {
+  cursor.style.left = e.clientX - 6 + 'px';
+  cursor.style.top = e.clientY - 6 + 'px';
+  cursorRing.style.left = e.clientX - 18 + 'px';
+  cursorRing.style.top = e.clientY - 18 + 'px';
+});
+
+document.addEventListener('mouseover', e => {
+  if (e.target.matches('button, a, select, textarea, input, .tag, .qp-btn, .hist-item, .color-swatch, .empty-hint-item')) {
+    cursor.classList.add('hover');
+    cursorRing.classList.add('hover');
+  } else {
+    cursor.classList.remove('hover');
+    cursorRing.classList.remove('hover');
+  }
+});
+
+// ===== MODAL =====
+function openModal() {
+  const m = document.getElementById('modal-bg');
+  m.classList.remove('hidden');
+  const inp = document.getElementById('api-input');
+  inp.value = API_KEY;
+  setTimeout(() => inp.focus(), 150);
+}
+function closeModal() {
+  document.getElementById('modal-bg').classList.add('hidden');
+}
+function toggleEye() {
+  const inp = document.getElementById('api-input');
+  const btn = document.getElementById('eye-btn');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    inp.type = 'password';
+    btn.textContent = '👁️';
+  }
+}
+function saveKey() {
+  const key = document.getElementById('api-input').value.trim();
+  if (!key || !key.startsWith('sk-')) {
+    showToast('API Key tidak valid! Harus dimulai dengan "sk-"', 'error', '❌');
+    return;
+  }
+  API_KEY = key;
+  localStorage.setItem('wfai_key', key);
+  updateApiStatus();
+  closeModal();
+  showToast('API Key tersimpan! Siap generate 🚀', 'success', '✅');
+}
+document.getElementById('api-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') saveKey(); });
+window.addEventListener('click', e => { if (e.target === document.getElementById('modal-bg')) closeModal(); });
+
+function updateApiStatus() {
+  const dot = document.getElementById('status-dot');
+  const text = document.getElementById('api-pill-text');
+  if (API_KEY) {
+    dot.classList.add('on');
+    text.textContent = 'API Aktif';
+  } else {
+    dot.classList.remove('on');
+    text.textContent = 'Tambah API Key';
+  }
+}
+
+// ===== GENERATE =====
+async function generate() {
+  if (isGenerating) return;
+  if (!API_KEY) { openModal(); return; }
+
+  const prompt = document.getElementById('prompt').value.trim();
+  if (!prompt) { showToast('Tulis deskripsi website dulu ya!', 'error', '⚠️'); return; }
+
+  const model = document.getElementById('model-sel').value;
+  const style = document.getElementById('style-sel').value;
+  const lang = document.getElementById('lang-sel').value;
+  const len = document.getElementById('len-sel').value;
+  const anim = document.getElementById('tog-anim').classList.contains('on');
+  const resp = document.getElementById('tog-resp').classList.contains('on');
+  const js = document.getElementById('tog-js').classList.contains('on');
+  const img = document.getElementById('tog-img').classList.contains('on');
+
+  const styles = {
+    modern: 'Modern, clean, professional. White space yang ideal, tipografi bersih, komponen yang rapi.',
+    dark: 'Dark mode premium dengan background hitam/sangat gelap, neon accents, glow effects, futuristic.',
+    glass: 'Glassmorphism: backdrop-filter blur, transparansi frosted glass, gradient subtle, depth visual.',
+    bold: 'Bold dan colorful! Warna-warna cerah kontras tinggi, tipografi besar impactful, energi tinggi.',
+    minimal: 'Ultra minimal: hitam putih saja, whitespace sangat luas, typografi dominan, zen-like.',
+    retro: 'Retro futuristic: scanlines, grid patterns, CRT glow, warna neon, aesthetic 80s/90s sci-fi.',
+    luxury: 'Luxury premium: warna gelap, aksen emas/silver, serif fonts elegan, textured backgrounds, high-end feel.',
+    playful: 'Playful dan fun: sudut bulat, warna pastel cerah, ilustrasi, animasi bounce, friendly dan approachable.'
+  };
+
+  const lengths = {
+    full: 'Sangat lengkap dan detail. Semua section yang disebutkan harus ada, dengan konten yang kaya.',
+    medium: 'Section utama saja, dengan konten yang cukup.',
+    quick: 'Prototype cepat, struktur minimal, bisa dikembangkan.'
+  };
+
+  const systemPrompt = `Kamu adalah seorang world-class web designer dan developer. Kamu membuat website HTML/CSS/JS yang luar biasa indah, profesional, dan berfungsi dengan sempurna.
+
+ATURAN KETAT:
+1. Buat HANYA kode HTML lengkap dalam SATU file (CSS dan JS inline)
+2. Output harus DIMULAI dengan <!DOCTYPE html> dan DIAKHIRI dengan </html>
+3. JANGAN tambahkan penjelasan, markdown, backtick, atau teks apapun di luar HTML
+4. Kode harus bisa langsung dijalankan di browser tanpa modifikasi
+
+STYLE DESAIN: ${styles[style]}
+PALET WARNA: Utamakan warna ${selectedColor}, buat harmonis dan cohesive
+BAHASA KONTEN: ${lang === 'indonesian' ? 'Semua teks dalam Bahasa Indonesia' : 'All text in English'}
+KELENGKAPAN: ${lengths[len]}
+${anim ? '✅ GUNAKAN animasi CSS: transitions, keyframes, scroll animations, hover effects' : '❌ Tidak perlu animasi, desain static saja'}
+${resp ? '✅ HARUS fully responsive: mobile, tablet, desktop dengan breakpoints yang tepat' : ''}
+${js ? '✅ GUNAKAN JavaScript untuk interaktivitas: smooth scroll, dropdown, accordion, tabs, dll' : '❌ Tidak perlu JavaScript'}
+${img ? '✅ Gunakan placeholder images dari picsum.photos atau unsplash.it' : '✅ Gunakan CSS-only visuals, gradients, shapes sebagai pengganti gambar'}
+
+WAJIB:
+- Google Fonts untuk tipografi yang outstanding
+- CSS custom properties (variables)
+- Kode yang clean dan well-structured
+- Design yang benar-benar memukau dan profesional
+- Perhatikan detail: shadow, border-radius, spacing, kerning`;
+
+  // Start generating
+  isGenerating = true;
+  generatedCode = '';
+  startTime = Date.now();
+  abortController = new AbortController();
+
+  // UI
+  document.getElementById('gen-btn').disabled = true;
+  document.getElementById('gen-icon').innerHTML = '<div class="spin" style="width:16px;height:16px;border-color:rgba(255,255,255,0.2);border-top-color:white"></div>';
+  document.getElementById('gen-text').textContent = 'Generating...';
+  document.getElementById('stream-overlay').classList.add('show');
+  document.getElementById('stream-title').textContent = 'Membangun website...';
+  document.getElementById('stream-sub').textContent = `Menghubungi ${model}`;
+  document.getElementById('stream-fill').style.width = '5%';
+  document.getElementById('progress-fill').style.display = 'block';
+  document.getElementById('progress-fill').style.width = '5%';
+  document.getElementById('empty-state').style.display = 'none';
+
+  switchTab('preview');
+
+  let charCount = 0;
+  let tokenEst = 0;
+  let progressVal = 5;
+
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      signal: abortController.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`
+      },
+      body: JSON.stringify({
+        model,
+        stream: true,
+        max_tokens: 4096,
+        temperature: parseFloat(document.getElementById('temp-slider').value),
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Buat website dengan deskripsi ini:\n\n${prompt}` }
+        ]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') continue;
+        try {
+          const json = JSON.parse(data);
+          const delta = json.choices?.[0]?.delta?.content || '';
+          if (delta) {
+            generatedCode += delta;
+            charCount += delta.length;
+            tokenEst = Math.round(charCount / 4);
+
+            // Progress
+            progressVal = Math.min(90, 5 + (charCount / 40));
+            document.getElementById('stream-fill').style.width = progressVal + '%';
+            document.getElementById('progress-fill').style.width = progressVal + '%';
+            document.getElementById('stream-sub').textContent = `${charCount.toLocaleString()} karakter diterima...`;
+            document.getElementById('stream-title').textContent = charCount < 500 ? 'Merancang struktur...' : charCount < 2000 ? 'Menulis HTML & CSS...' : charCount < 4000 ? 'Menambahkan JavaScript...' : 'Memfinalisasi...';
+
+            // Update stats
+            document.getElementById('stat-chars').textContent = `${charCount.toLocaleString()} chars`;
+            document.getElementById('stat-tokens').textContent = `~${tokenEst} tokens`;
+            document.getElementById('stat-lines').textContent = `${generatedCode.split('\n').length} lines`;
+            document.getElementById('stat-model').textContent = model;
+
+            // Live preview every 300 chars
+            if (charCount % 300 < delta.length) {
+              liveUpdate(generatedCode);
+            }
+          }
+        } catch {}
+      }
+    }
+
+    // Done
+    liveUpdate(generatedCode);
+    document.getElementById('code-pre').textContent = generatedCode;
+    document.getElementById('stream-fill').style.width = '100%';
+    document.getElementById('progress-fill').style.width = '100%';
+
+    // Stats
+    updateStatsPanel(generatedCode);
+    addHistory(prompt, generatedCode, model);
+
+    usageCount++;
+    localStorage.setItem('wfai_usage', usageCount);
+    updateUsageCounter();
+
+    showToast(`Website berhasil dibuat! ${charCount.toLocaleString()} chars`, 'success', '🎉');
+
+    setTimeout(() => {
+      document.getElementById('progress-fill').style.display = 'none';
+    }, 1000);
+
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      showToast('Generate dibatalkan', 'info', 'ℹ️');
+    } else {
+      let msg = err.message;
+      if (msg.includes('401')) msg = 'API Key tidak valid atau expired';
+      else if (msg.includes('429')) msg = 'Rate limit! Tunggu sebentar lalu coba lagi';
+      else if (msg.includes('quota')) msg = 'Quota OpenAI habis, cek billing';
+      else if (msg.includes('fetch')) msg = 'Gagal terhubung. Upload file ke Netlify/hosting dulu!';
+      showToast(msg, 'error', '❌');
+      document.getElementById('empty-state').style.display = generatedCode ? 'none' : 'flex';
+    }
+  } finally {
+    isGenerating = false;
+    abortController = null;
+    document.getElementById('gen-btn').disabled = false;
+    document.getElementById('gen-icon').textContent = '✦';
+    document.getElementById('gen-text').textContent = 'Generate Website';
+    document.getElementById('stream-overlay').classList.remove('show');
+    document.getElementById('progress-fill').style.width = '100%';
+  }
+}
+
+function cancelGenerate() {
+  if (abortController) abortController.abort();
+}
+
+function liveUpdate(code) {
+  const wrap = document.getElementById('iframe-wrapper');
+  const iframe = document.getElementById('preview-iframe');
+  wrap.style.display = 'block';
+
+  let html = code;
+  const m = code.match(/<!DOCTYPE html>[\s\S]*/i);
+  if (m) html = m[0];
+
+  try {
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open(); doc.write(html); doc.close();
+  } catch(e) {}
+}
+
+// ===== TIMER =====
+function updateTimer() {
+  if (isGenerating && startTime) {
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    document.getElementById('stat-time').textContent = elapsed + 's';
+  }
+}
+
+// ===== TABS =====
+function switchTab(tab) {
+  const tabs = ['preview','code','diff'];
+  tabs.forEach(t => {
+    document.getElementById('ptab-' + t)?.classList.remove('active');
+    document.getElementById(t === 'preview' ? 'iframe-wrapper' : t + '-panel')?.style && (
+      document.getElementById(t === 'preview' ? 'iframe-wrapper' : t + '-panel').style.display = 'none'
+    );
+  });
+
+  document.getElementById('ptab-' + tab)?.classList.add('active');
+
+  if (tab === 'preview') {
+    if (generatedCode) {
+      document.getElementById('iframe-wrapper').style.display = 'block';
+      document.getElementById('empty-state').style.display = 'none';
+    } else {
+      document.getElementById('empty-state').style.display = 'flex';
+    }
+  } else if (tab === 'code') {
+    const panel = document.getElementById('code-panel');
+    panel.style.display = 'block';
+    panel.style.width = '100%';
+    panel.style.height = '100%';
+    panel.style.position = 'absolute';
+    panel.style.inset = '0';
+    document.getElementById('code-pre').textContent = generatedCode || '// Belum ada kode yang digenerate';
+    document.getElementById('empty-state').style.display = 'none';
+  } else if (tab === 'diff') {
+    const panel = document.getElementById('diff-panel');
+    panel.style.display = 'block';
+    panel.style.position = 'absolute';
+    panel.style.inset = '0';
+    document.getElementById('empty-state').style.display = 'none';
+    updateStatsPanel(generatedCode);
+  }
+}
+
+// ===== STATS PANEL =====
+function updateStatsPanel(code) {
+  if (!code) return;
+  const lines = code.split('\n').length;
+  const chars = code.length;
+  const tokens = Math.round(chars / 4);
+  const cssMatch = code.match(/<style[\s\S]*?<\/style>/gi) || [];
+  const jsMatch = code.match(/<script[\s\S]*?<\/script>/gi) || [];
+  const cssChars = cssMatch.join('').length;
+  const jsChars = jsMatch.join('').length;
+  const htmlChars = chars - cssChars - jsChars;
+
+  document.getElementById('stats-content').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+      ${statCard('📄 Total Baris', lines.toLocaleString(), 'var(--c1)')}
+      ${statCard('🔤 Total Karakter', chars.toLocaleString(), 'var(--c3)')}
+      ${statCard('🪙 Estimasi Token', tokens.toLocaleString(), 'var(--c4)')}
+      ${statCard('⏱️ Waktu Generate', document.getElementById('stat-time').textContent, 'var(--c5)')}
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px">Komposisi Kode</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${progressStat('HTML', htmlChars, chars, 'var(--c6)')}
+        ${progressStat('CSS', cssChars, chars, 'var(--c1)')}
+        ${progressStat('JavaScript', jsChars, chars, 'var(--c5)')}
+      </div>
+    </div>
+  `;
+}
+
+function statCard(label, val, color) {
+  return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px">
+    <div style="font-size:12px;color:var(--text3);margin-bottom:6px">${label}</div>
+    <div style="font-size:22px;font-weight:800;color:${color};font-family:'JetBrains Mono',monospace">${val}</div>
+  </div>`;
+}
+
+function progressStat(label, val, total, color) {
+  const pct = total ? Math.round((val / total) * 100) : 0;
+  return `<div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px">
+      <span style="color:var(--text2);font-weight:600">${label}</span>
+      <span style="color:var(--text3);font-family:'JetBrains Mono',monospace">${val.toLocaleString()} chars (${pct}%)</span>
+    </div>
+    <div style="height:6px;background:var(--surface3);border-radius:100px;overflow:hidden">
+      <div style="height:100%;width:${pct}%;background:${color};border-radius:100px;transition:width 0.6s"></div>
+    </div>
+  </div>`;
+}
+
+// ===== DEVICE =====
+function setDevice(dev) {
+  document.querySelectorAll('.dev-btn').forEach(b => b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+
+  const wrap = document.getElementById('iframe-wrapper');
+  wrap.className = 'iframe-wrapper ' + (dev === 'desktop' ? '' : dev);
+  if (dev === 'desktop') wrap.style.cssText = 'display:block;width:100%;height:100%';
+}
+
+// ===== CONTROLS =====
+function toggleOpt(id) {
+  document.getElementById(id).classList.toggle('on');
+}
+
+function selectColor(el) {
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  selectedColor = el.dataset.color;
+}
+
+function updateTemp(val) {
+  document.getElementById('temp-val').textContent = parseFloat(val).toFixed(1);
+}
+
+function clearPrompt() {
+  document.getElementById('prompt').value = '';
+  document.getElementById('char-count').textContent = '0 / 1000';
+  // Reset tags
+  document.querySelectorAll('.tag.active').forEach(t => t.classList.remove('active'));
+}
+
+function setQuick(key) {
+  document.getElementById('prompt').value = QUICK_PROMPTS[key];
+  document.getElementById('char-count').textContent = QUICK_PROMPTS[key].length + ' / 1000';
+  document.getElementById('prompt').focus();
+  showToast('Prompt siap! Klik Generate untuk mulai', 'info', '✨');
+}
+
+function toggleTag(el, tag) {
+  el.classList.toggle('active');
+  const prompt = document.getElementById('prompt');
+  let txt = prompt.value;
+  if (el.classList.contains('active')) {
+    if (!txt.includes(tag)) {
+      prompt.value = txt + (txt.length && !txt.endsWith(' ') ? ', ' : '') + tag;
+    }
+  } else {
+    prompt.value = txt.replace(new RegExp(',?\\s*' + tag, 'g'), '').trim();
+  }
+  document.getElementById('char-count').textContent = prompt.value.length + ' / 1000';
+}
+
+// ===== ACTIONS =====
+function copyCode() {
+  if (!generatedCode) { showToast('Belum ada kode!', 'error', '⚠️'); return; }
+  navigator.clipboard.writeText(generatedCode)
+    .then(() => showToast('Kode berhasil dicopy!', 'success', '📋'))
+    .catch(() => showToast('Gagal copy', 'error', '❌'));
+}
+
+function downloadCode() {
+  if (!generatedCode) { showToast('Belum ada kode!', 'error', '⚠️'); return; }
+  const blob = new Blob([generatedCode], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `website-${Date.now()}.html`;
+  a.click();
+  showToast('File diunduh!', 'success', '⬇️');
+}
+
+function openFull() {
+  if (!generatedCode) { showToast('Belum ada kode!', 'error', '⚠️'); return; }
+  const blob = new Blob([generatedCode], { type: 'text/html' });
+  window.open(URL.createObjectURL(blob), '_blank');
+}
+
+function refreshPreview() {
+  if (generatedCode) liveUpdate(generatedCode);
+}
+
+// ===== HISTORY =====
+function addHistory(prompt, code, model) {
+  const item = { prompt: prompt.slice(0, 100), code, model, time: Date.now() };
+  history.unshift(item);
+  if (history.length > 15) history.pop();
+  localStorage.setItem('wfai_history', JSON.stringify(history));
+  renderHistory();
+}
+
+function renderHistory() {
+  const sect = document.getElementById('hist-section');
+  const list = document.getElementById('hist-list');
+  if (!history.length) { sect.style.display = 'none'; return; }
+  sect.style.display = 'block';
+  list.innerHTML = history.map((h, i) => `
+    <div class="hist-item" onclick="loadHistory(${i})">
+      <div class="hist-dot"></div>
+      <span class="hist-text">${h.prompt}</span>
+      <button class="hist-del" onclick="event.stopPropagation();deleteHistory(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function loadHistory(i) {
+  const item = history[i];
+  generatedCode = item.code;
+  document.getElementById('prompt').value = item.prompt;
+  document.getElementById('code-pre').textContent = item.code;
+  liveUpdate(item.code);
+  switchTab('preview');
+  showToast('Riwayat dimuat!', 'success', '📂');
+}
+
+function deleteHistory(i) {
+  history.splice(i, 1);
+  localStorage.setItem('wfai_history', JSON.stringify(history));
+  renderHistory();
+}
+
+function clearHistory() {
+  if (!confirm('Hapus semua riwayat?')) return;
+  history = [];
+  localStorage.setItem('wfai_history', JSON.stringify(history));
+  renderHistory();
+}
+
+// ===== NAV VIEWS =====
+function switchView(view) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  // Could expand with full view switching
+}
+
+// ===== USAGE =====
+function updateUsageCounter() {
+  document.getElementById('usage-counter').textContent = usageCount + ' gen';
+}
+
+// ===== TOAST =====
+let toastId = 0;
+function showToast(msg, type='info', icon='ℹ️') {
+  const container = document.getElementById('toast-container');
+  const id = ++toastId;
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.id = 'toast-' + id;
+  el.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-msg">${msg}</span><button class="toast-close" onclick="removeToast(${id})">✕</button>`;
+  container.appendChild(el);
+  setTimeout(() => el.classList.add('show'), 10);
+  setTimeout(() => removeToast(id), 4000);
+}
+function removeToast(id) {
+  const el = document.getElementById('toast-' + id);
+  if (!el) return;
+  el.classList.remove('show');
+  setTimeout(() => el.remove(), 400);
+}
+
+// ===== KEYBOARD =====
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate();
+  if (e.key === 'Escape' && isGenerating) cancelGenerate();
+});
+</script>
+</body>
+</html>
